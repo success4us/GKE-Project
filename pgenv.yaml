@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pg-secrets
+type: Opaque
+data:
+  PG_PRIMARY_USER: cHJpbWFyeXVzZXI=
+  PGHOST: L3RtcA==
+  PG_MODE: c2V0
+  PG_PRIMARY_PASSWORD: cGFzc3dvcmQ=
+  PG_USER: dGVzdHVzZXI=
+  PG_PASSWORD: cGFzc3dvcmQ=
+  PG_DATABASE: dXNlcmRi
+  PG_ROOT_PASSWORD: cGFzc3dvcmQ=
+  PG_PRIMARY_PORT: NTQzMg==
+  PG_PRIMARY_HOST: cGdzZXQtcHJpbWFyeQ==
+  DB_PASSWORD: YWRtaW4=
+  DB_HOST: _ENCODE_
+  DB_USER: cG9zdGdyZXM=

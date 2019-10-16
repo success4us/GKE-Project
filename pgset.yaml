@@ -1,0 +1,161 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pgset
+  name: pgset
+spec:
+  ports:
+  - name: pg
+    port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    app: pgset
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: pgset-primary
+  name: pgset-primary
+spec:
+  ports:
+  - port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    name: pgset-primary
+  type: ClusterIP
+---
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  generation: 1
+  labels:
+    app: pgset
+  name: pgset
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgset
+  serviceName: pgset
+  template:
+    metadata:
+      labels:
+        app: pgset
+    spec:
+      containers:
+      - env:
+          - name: PG_PRIMARY_USER
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: PG_PRIMARY_USER
+          - name: PGHOST
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: PGHOST
+          - name: PG_MODE
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: PG_MODE
+          - name: PG_PRIMARY_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: PG_PRIMARY_PASSWORD
+          - name: PG_USER
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: PG_USER
+          - name: PG_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: PG_PASSWORD
+          - name: PG_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: PG_DATABASE
+          - name: PG_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: PG_ROOT_PASSWORD
+          - name: PG_PRIMARY_PORT
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: PG_PRIMARY_PORT
+          - name: PG_PRIMARY_HOST
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: PG_PRIMARY_HOST
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: DB_HOST
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: DB_PASSWORD
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: pg-secrets
+                key: DB_USER
+        image: crunchydata/crunchy-postgres:centos7-10.0-1.6.0
+        imagePullPolicy: Always
+        name: pgset
+        args: 
+        readinessProbe:
+          tcpSocket:
+            port: 5432
+          # initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: 5432
+          # initialDelaySeconds: 15
+          periodSeconds: 20
+        ports:
+        - containerPort: 5432
+          name: postgres
+          protocol: TCP       
+        volumeMounts:
+        - mountPath: /pgdata
+          name: pgdata
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 26
+  updateStrategy:
+    type: OnDelete
+  volumeClaimTemplates:
+  - metadata:
+      annotations:
+        volume.beta.kubernetes.io/storage-class: standard
+      name: pgdata
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      dataSource: null
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: standard
+      volumeMode: Filesystem
